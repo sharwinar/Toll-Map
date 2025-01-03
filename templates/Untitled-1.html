@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Toll Map with Base</title>
+    <title>Custom Map with Filters</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -94,7 +94,7 @@
     return L.divIcon({
         className: 'custom-marker',
         html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="green" stroke="#fff" stroke-width="0.8" d="M12 2C8.1 2 5 5.1 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.9-3.1-7-7-7z"/>
+                    <path fill="${color}" stroke="#fff" stroke-width="0.8" d="M12 2C8.1 2 5 5.1 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.9-3.1-7-7-7z"/>
                     <circle cx="12" cy="8" r="3" fill="white" />
                 </svg>`
     });
@@ -104,7 +104,7 @@
         return L.divIcon({
             className: 'custom-marker',
             html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="12" fill="blue" stroke="#fff" stroke-width="0.5"/>
+                        <circle cx="12" cy="12" r="12" fill="${color}" stroke="#fff" stroke-width="0.5"/>
                         <path fill="#fff" d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
                     </svg>`
         });
@@ -168,10 +168,7 @@ fetch(`/regions?zone=${zone}`)
 
             let icon;
                     if (marker.type === 'Toll') {
-                        let linkedTslMarker = markers.find(m => m.geocode === marker.tagged && m.type === 'TSL');
-                        // Use the color from the TSL marker, or default to green if no color is found
-                        iconColor = linkedTslMarker ? linkedTslMarker.color || 'black' : 'black';
-                        icon = createIcon(iconColor); // Use the TSL's color for the MT Location marker
+                        icon = createIcon(marker.color); // Use the TSL's color for the MT Location marker
                     }   else if (marker.type === 'Base') {
                         icon = tslIcon(marker.color); // Standard TSL icon
                     }
