@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 import pandas as pd
-import random
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -10,6 +9,18 @@ CORS(app)
 # Load data
 toll_data = pd.read_csv('Toll_data.csv')  # Toll data CSV
 base_data = pd.read_csv('TSL_data.csv')
+
+
+from matplotlib import cm, colors
+
+# Assign unique colors to regions
+def assign_colors(unique_items):
+     # Generate distinct colors using matplotlib's tab20 colormap
+    color_palette = cm.get_cmap('tab20', len(unique_items))  # Generate enough colors
+    unique_colors = [colors.to_hex(color_palette(i)) for i in range(len(unique_items))]
+    return {item: color for item, color in zip(unique_items, unique_colors)}
+
+region_colors = assign_colors(toll_data['Region'].unique())
 
 # Clean lat/long columns
 toll_data['Toll_Lat'] = toll_data['Toll_Lat'].astype(str).str.replace(r'\s+', '', regex=True)
@@ -58,7 +69,8 @@ def get_markers():
                 'type': 'Toll',
                 'zone': row['Zone'],
                 'region': row['Region'],
-                'tagged': row['Tagged']
+                'tagged': row['Tagged'],
+                'color': region_colors.get(row['Region']) 
             })
 
     for _, row in base_data.iterrows():
@@ -71,6 +83,7 @@ def get_markers():
                 'type': 'Base',
                 'zone': row['Zone'],
                 'region': row['Region'],
+                'color': region_colors.get(row['Region'], '#000000')
             })
 
     return jsonify(markers)
