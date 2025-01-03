@@ -73,6 +73,12 @@
             </svg>
             <span>Toll: <span id="mt-count"> 0</span>
         </div>
+        <div class="legend-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="blue" stroke="#fff" stroke-width="0.5"/>
+                <path fill="#fff" d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
+            </svg>
+            <span>Base: <span id="tsl-count"> 0</span>
         </div>
     </div>
 
@@ -92,7 +98,17 @@
                     <circle cx="12" cy="8" r="3" fill="white" />
                 </svg>`
     });
-};
+    };
+
+    const tslIcon = (color) => {
+        return L.divIcon({
+            className: 'custom-marker',
+            html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="12" fill="blue" stroke="#fff" stroke-width="0.5"/>
+                        <path fill="#fff" d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
+                    </svg>`
+        });
+    };
 
     // Fetch and populate zones
     fetch('/zones')
@@ -141,6 +157,7 @@ fetch(`/regions?zone=${zone}`)
     markersLayer.clearLayers(); // Clear existing markers
 
     let mtCount = 0;
+    let tslCount = 0;
 
     markers.forEach(marker => {
 
@@ -155,30 +172,45 @@ fetch(`/regions?zone=${zone}`)
                         // Use the color from the TSL marker, or default to green if no color is found
                         iconColor = linkedTslMarker ? linkedTslMarker.color || 'black' : 'black';
                         icon = createIcon(iconColor); // Use the TSL's color for the MT Location marker
+                    }   else if (marker.type === 'Base') {
+                        icon = tslIcon(marker.color); // Standard TSL icon
                     }
 
         // Extract correct lat/lon based on the type
-            const latitude = marker.type === 'Toll' ? marker.latitude : marker.Tlatitude;
-            const longitude = marker.type === 'Toll' ? marker.longitude : marker.Tlongitude;
+            const latitude = marker.type === 'Toll' ? marker.latitude : marker.blatitude;
+            const longitude = marker.type === 'Toll' ? marker.longitude : marker.blongitude;
 
         if (latitude !== undefined && longitude !== undefined) {// Add marker to the map
             const markerInstance = L.marker([latitude, longitude], { icon }).addTo(markersLayer);
 
         // Bind popup with relevant information
-        markerInstance.bindPopup(`
-            <b>${marker.location}</b><br>
-            Code: ${marker.Code}<br>
-            Tagged: ${marker.tagged}<br>
-            Zone: ${marker.zone || 'N/A'}<br>
-            Region: ${marker.region || 'N/A'}
-        `);
+        markerInstance.bindPopup(() => {
+            if (marker.type === 'Toll') {
+                return `
+                    <b>${marker.location}</b><br>
+                    Code: ${marker.Code}<br>
+                    Tagged: ${marker.tagged}<br>
+                    Zone: ${marker.zone || 'N/A'}<br>
+                    Region: ${marker.region || 'N/A'}
+                `;
+            } else if (marker.type === 'Base') {
+                return `
+                    <b>Base: ${marker.blocation}</b><br>
+                    Zone: ${marker.zone || 'N/A'}<br>
+                    Region: ${marker.region || 'N/A'}
+                `;
+            }
+            });
         if (marker.type === 'Toll') {
                     mtCount++;
+                } else if (marker.type === 'Base') {
+                    tslCount++;
                 }
         }
     }
     });
     document.getElementById('mt-count').textContent = mtCount;
+    document.getElementById('tsl-count').textContent = tslCount;
 })
 .catch(error => console.error('Error fetching markers:', error));
     };
