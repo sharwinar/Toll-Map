@@ -9,10 +9,13 @@ CORS(app)
 
 # Load data
 toll_data = pd.read_csv('Toll_data.csv')  # Toll data CSV
+base_data = pd.read_csv('TSL_data.csv')
 
 # Clean lat/long columns
 toll_data['Toll_Lat'] = toll_data['Toll_Lat'].astype(str).str.replace(r'\s+', '', regex=True)
 toll_data['Toll_Long'] = toll_data['Toll_Long'].astype(str).str.replace(r'\s+', '', regex=True)
+base_data['Lat'] = base_data['Lat'].astype(str).str.replace(r'\s+', '', regex=True)
+base_data['Long'] = base_data['Long'].astype(str).str.replace(r'\s+', '', regex=True)
 
 # Convert lat/long columns to floats
 def safe_float(value):
@@ -23,6 +26,8 @@ def safe_float(value):
 
 toll_data['Toll_Lat'] = toll_data['Toll_Lat'].apply(safe_float)
 toll_data['Toll_Long'] = toll_data['Toll_Long'].apply(safe_float)
+base_data['Lat'] = base_data['Lat'].apply(safe_float)
+base_data['Long'] = base_data['Long'].apply(safe_float)
 
 @app.route('/')
 def index():
@@ -56,6 +61,18 @@ def get_markers():
                 'tagged': row['Tagged']
             })
 
+    for _, row in base_data.iterrows():
+        if pd.notna(row['Lat']) and pd.notna(row['Long']):
+            # Find the TSL marker linked to this Toll marker
+            markers.append({
+                'blocation': row['Base'],
+                'blatitude': row['Lat'],
+                'blongitude': row['Long'],
+                'type': 'Base',
+                'zone': row['Zone'],
+                'region': row['Region'],
+            })
+
     return jsonify(markers)
 
 
@@ -74,8 +91,5 @@ def get_regions():
     return jsonify(regions)
 
 # Run the Flask app
-import os
-
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))  # Get the PORT from the environment, default to 5000
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)
